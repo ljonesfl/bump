@@ -8,6 +8,20 @@ Use the command line utility in build scripts to increment the version number.<b
 It supports the semver terminology of major, minor and patch.<br>
 
 Example:<br>
-  `bump.rb --patch`
+
+    bump --patch
 
 This will load the version file, increment the patch number and write it back out.
+
+## Installation
+
+### MacOS
+
+Make the file executable:
+
+    chmod +x bump
+
+To install the command globally:
+
+    sudo cp bump /usr/local/bin
+    
