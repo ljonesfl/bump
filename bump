@@ -5,7 +5,13 @@ require 'optparse'
 
 class Version
 
-  def initialize(file)
+  def initialize
+    @major = 0
+    @minor = 0
+    @patch = 0
+  end
+
+  def load(file = 'version.json' )
     if !File.file?(file)
       raise file + " not found."
     end
@@ -34,12 +40,16 @@ class Version
     'v' + @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
   end
 
-  def write
+  def write( file = '' )
     ver = {
         "major" => @major,
         "minor" => @minor,
         "patch" => @patch
     }
+
+    if file != '' then
+      @file = file
+    end
 
     File.open(@file, "w") do |f|
       f.write(ver.to_json)
@@ -54,6 +64,11 @@ optparse = OptionParser.new do |options|
     puts options
     exit
   end
+
+  options.on('-n', '--new', 'Create new version.json.') do |name|
+    opts[:new] = true
+  end
+
 
   options.on('-a', '--major', 'Bump major number.') do |name|
     opts[:major] = true
@@ -75,11 +90,17 @@ end
 
 optparse.parse($*)
 
-begin
-  ver = Version.new(opts[:file])
-rescue => e
-  p e.message
-  exit
+ver = Version.new()
+
+if opts[:new] then
+    ver.write( "version.json" )
+    p "File created."
+else
+  begin
+    ver.load( opts[:file] )
+  rescue Exception => e
+    p e.message
+  end
 end
 
 if opts[:major] then

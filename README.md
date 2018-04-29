@@ -32,6 +32,12 @@ major:
     
 This will load the version file, increment the patch number and write it back out.
 
+#### Creating a New File
+
+    bump --new
+    
+Creates a new version.json file is the current folder.
+
 ## Installation
 
 ### MacOS
