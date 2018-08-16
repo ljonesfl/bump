@@ -37,7 +37,7 @@ class Version
   end
 
   def string
-    'v' + @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
+    @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
   end
 
   def write( file = '' )
@@ -103,18 +103,25 @@ else
   end
 end
 
+write = false
+
 if opts[:major] then
   ver.bump_major
+  write = true
 end
 
 if opts[:minor] then
   ver.bump_minor
+  write = true
 end
 
 if opts[:patch] then
   ver.bump_patch
+  write = true
 end
 
-ver.write
+if write then
+  ver.write
+end
 
 puts ver.string
