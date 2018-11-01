@@ -13,10 +13,27 @@ Show current version:
 
     bump
     
+Typing bump by itself in a directory containing a version.json file will show the 
+current version on the command line.
+
+e.g.
+
+0.1.4
+
+If the version contains a build number > 0 then it will show the build also.
+
+e.g.
+
+0.1.4 (15) 
+    
 #### Incrementing Version Elements
 
 Performing an increment action reads the file, increments the requested element and writes the file back 
 out. This is ideal for automated release scripts.
+   
+build:
+
+    bump --build
     
 patch:
     

@@ -1,5 +1,9 @@
 # Versionlog
 
+## 0.1.5
+
+* Added optional build number
+
 ## 0.1.4 2018-08-16
 
 * Removed the v from the beginning of the version output.
