@@ -1,6 +1,6 @@
 # Versionlog
 
-## 0.1.5
+## 0.1.5 2018-11-01
 
 * Added optional build number
 
