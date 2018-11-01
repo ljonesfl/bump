@@ -67,3 +67,15 @@ To install the command globally:
 
     sudo cp bump /usr/local/bin
     
+## Usage with gitflow
+
+A useful technique for creating a release using gitflow is to use the following command
+from the develop branch:
+
+     bump | xargs git flow release start
+     
+ Assuming your current version is 1.2.3, this command is the equivalent of typing:
+ 
+    git flow release start 1.2.3
+    
+This command can easily be added as an alias to facilitate process automation.
