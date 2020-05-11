@@ -59,7 +59,7 @@ Creates a new version.json file is the current folder.
 
 ### MacOS
 
-Download the bump from the current repository or use wget:
+Download the current repository or use wget:
 
     wget https://raw.githubusercontent.com/ljonesfl/bump/master/bump
 
