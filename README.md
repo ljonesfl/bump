@@ -59,6 +59,10 @@ Creates a new version.json file is the current folder.
 
 ### MacOS
 
+Download the current repository or use wget:
+
+    wget https://raw.githubusercontent.com/ljonesfl/bump/master/bump
+
 Make the file executable:
 
     chmod +x bump
