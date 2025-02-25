@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://json.schemastore.org/version.json",
   "title": "Version Schema",
-  "description": "Schema for storing project versions. Used by https://github.com/ljonesfl/bump",
+  "description": "Schema for storing project versions. Managed by https://github.com/ljonesfl/bump",
   "type": "object",
   "properties": {
     "major": {
@@ -24,13 +24,13 @@
       "type": "integer",
       "description": "Build version number",
       "minimum": 0
-    },
-    "required": [
-      "major",
-      "minor",
-      "patch",
-      "build"
-    ],
+    }
   },
+  "required": [
+    "major",
+    "minor",
+    "patch",
+    "build"
+  ],
   "additionalProperties": false
 }
