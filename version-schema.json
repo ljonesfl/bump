@@ -24,13 +24,13 @@
       "type": "integer",
       "description": "Build version number",
       "minimum": 0
-    }
+    },
+    "required": [
+      "major",
+      "minor",
+      "patch",
+      "build"
+    ],
   },
-  "required": [
-    "major",
-    "minor",
-    "patch",
-    "build"
-  ],
   "additionalProperties": false
 }
