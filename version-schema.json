@@ -1,8 +1,8 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://json.schemastore.org/version.json",
-  "title": "Version Schema",
-  "description": "Schema for storing project versions. Managed by https://github.com/ljonesfl/bump",
+  "title": "version",
+  "description": "Schema for storing project versions. Managed by\nhttps://github.com/ljonesfl/bump",
   "type": "object",
   "properties": {
     "major": {
