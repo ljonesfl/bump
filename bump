@@ -5,6 +5,8 @@ require 'optparse'
 
 class Version
 
+  VERSION_FILE = '.version.json'
+
   def initialize
     @major = 0
     @minor = 0
@@ -12,7 +14,7 @@ class Version
     @build = 0
   end
 
-  def load(file = 'version.json' )
+  def load(file = Version::VERSION_FILE )
     if !File.file?(file)
       raise file + " not found."
     end
@@ -51,7 +53,7 @@ class Version
   def string
     text = @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
 
-    if @build > 0 then
+    if @build > 0
       text = text + ' (' + @build.to_s + ')'
     end
 
@@ -66,11 +68,11 @@ class Version
         "build" => @build
     }
 
-    if file != '' then
+    if file != ''
       @file = file
     end
 
-    File.open(@file, "w") do |f|
+    File.open (@file, "w") do |f|
       f.write(ver.to_json)
     end
   end
@@ -81,7 +83,7 @@ opts = {
           :minor => false,
           :patch => false,
           :build => false,
-          :file => 'version.json'
+          :file => Version::VERSION_FILE,
 }
 
 optparse = OptionParser.new do |options|
@@ -90,23 +92,23 @@ optparse = OptionParser.new do |options|
     exit
   end
 
-  options.on('-n', '--new', 'Create new version.json.') do |name|
+  options.on('-n', '--new', 'Create new version.json.')
     opts[:new] = true
   end
 
-  options.on('-a', '--major', 'Bump major number.') do |name|
+  options.on('-a', '--major', 'Bump major number.') do
     opts[:major] = true
   end
 
-  options.on('-m', '--minor', 'Bump minor number.') do |name|
+  options.on('-m', '--minor', 'Bump minor number.') do
     opts[:minor] = true
   end
 
-  options.on('-p', '--patch', 'Bump patch number.') do |name|
+  options.on('-p', '--patch', 'Bump patch number.') do
     opts[:patch] = true
   end
 
-  options.on('-b', '--build', 'Bump build number.') do |name|
+  options.on('-b', '--build', 'Bump build number.') do
     opts[:build] = true
   end
 
@@ -120,7 +122,7 @@ optparse.parse($*)
 
 ver = Version.new()
 
-if opts[:new] then
+if opts[:new]
     ver.write( "version.json" )
     p "File created."
 else
@@ -133,27 +135,27 @@ end
 
 write = false
 
-if opts[:major] then
+if opts[:major]
   ver.bump_major
   write = true
 end
 
-if opts[:minor] then
+if opts[:minor]
   ver.bump_minor
   write = true
 end
 
-if opts[:patch] then
+if opts[:patch]
   ver.bump_patch
   write = true
 end
 
-if opts[:build] then
+if opts[:build]
   ver.bump_build
   write = true
 end
 
-if write then
+if write
   ver.write
 end
 
