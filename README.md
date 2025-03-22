@@ -3,9 +3,38 @@ Command line tool for bumping project versions.
 
 ## Usage
 
-Add a version.json file to the root of your project.<br>
+Add a `.version.json` file to the root of your project.<br>
 Use the command line utility in build scripts to increment the version number.<br>
-It supports the semver terminology of major, minor and patch.<br>
+
+## Strategies
+
+To select a strategy use the --strategy option.
+
+    bump --strategy semver|date
+
+### Semver (default)
+The default strategy is semver which looks like:
+
+    {
+        "strategy": "semver",
+        "major": 0,
+        "minor": 1,
+        "patch": 4,
+        "build": 15
+    }
+
+### Date
+The date strategy always uses the current date as the version number.
+
+    {
+        "strategy": "date",
+        "major": 2025,
+        "minor": 3,
+        "patch": 2
+        "build": 0
+    }
+
+The build is optional and defaults to 0. It is useful to track multiple releases in a single day.
 
 ### Examples
 
@@ -53,7 +82,7 @@ This will load the version file, increment the patch number and write it back ou
 
     bump --new
     
-Creates a new version.json file is the current folder.
+Creates a new `.version.json` file is the current folder.
 
 ## Installation
 
@@ -74,8 +103,5 @@ from the develop branch:
 
      bump | xargs git flow release start
      
- Assuming your current version is 1.2.3, this command is the equivalent of typing:
+ This command will create a new git flow release using the current version number.
  
-    git flow release start 1.2.3
-    
-This command can easily be added as an alias to facilitate process automation.

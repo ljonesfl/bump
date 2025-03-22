@@ -1,6 +1,7 @@
-## 0.1.6
 
-# Versionlog
+## 0.2.0 2025-03-02
+* Changed the default file name to .version.json.
+* Minor code cleanup.
 
 ## 0.1.5 2018-11-01
 
