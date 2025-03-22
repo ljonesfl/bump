@@ -1,5 +1,5 @@
 # bump
-Command line tool for bumping project versions.
+Command line tool for managing project versioning.
 
 ## Usage
 
@@ -36,7 +36,7 @@ The date strategy always uses the current date as the version number.
 
 The build is optional and defaults to 0. It is useful to track multiple releases in a single day.
 
-### Examples
+## Examples
 
 Show current version:
 
@@ -55,7 +55,7 @@ e.g.
 
 0.1.4 (15) 
     
-#### Incrementing Version Elements
+### Semver Strategy
 
 Performing an increment action reads the file, increments the requested element and writes the file back 
 out. This is ideal for automated release scripts.
@@ -78,7 +78,17 @@ major:
     
 This will load the version file, increment the patch number and write it back out.
 
-#### Creating a New File
+### Date Strategy
+
+The date strategy uses the --stamp command to set the version to the current date.
+
+    bump --stamp
+
+For multiple releases in a single day, the build number can be incremented.
+
+    bump --build
+
+### Creating a New File
 
     bump --new
     
