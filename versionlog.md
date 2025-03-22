@@ -1,3 +1,4 @@
+* Added the ability to support both semver and date strategies.
 
 ## 0.2.0 2025-03-02
 * Changed the default file name to .version.json.
