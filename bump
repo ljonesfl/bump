@@ -24,7 +24,7 @@ class Version
     @file = file
     @parts = JSON.parse( File.read( file ) )
 
-    @strategy = @parts['strategy']
+    @strategy = @parts[ 'strategy' ]
     @major    = @parts[ 'major' ].to_i
     @minor    = @parts[ 'minor' ].to_i
     @patch    = @parts[ 'patch' ].to_i
@@ -49,6 +49,10 @@ class Version
   end
 
   def bump_major
+    if @strategy != 'semver'
+      raise "Cannot bump the major version using the date strategy."
+    end
+
     @major += 1
     @minor = 0
     @patch = 0
@@ -56,12 +60,19 @@ class Version
   end
 
   def bump_minor
+    if @strategy != 'semver'
+      raise "Cannot bump the minor version using the date strategy."
+    end
     @minor += 1
     @patch = 0
     @build = 0
   end
 
   def bump_patch
+    if @strategy != 'semver'
+      raise "Cannot bump the patch version using the date strategy."
+    end
+
     @patch += 1
     @build = 0
   end
@@ -71,6 +82,10 @@ class Version
   end
 
   def stamp
+    if @strategy != 'date'
+      raise "Cannot stamp the version using the semver strategy."
+    end
+
     @major = Time.now.year
     @minor = Time.now.month
     @patch = Time.now.day
@@ -96,7 +111,7 @@ end
 write = false
 
 opts = {
-  :strategy => "semver",
+  :strategy => false,
   :major    => false,
   :minor    => false,
   :patch    => false,
@@ -123,10 +138,6 @@ optparse = OptionParser.new do |options|
   end
 
   options.on( '--stamp', "Stamp the current date." ) do
-    if @strategy != 'date'
-      puts "Stamping is only available with the date strategy."
-      exit 1
-    end
     opts[ :stamp ] = true
   end
 
@@ -135,26 +146,14 @@ optparse = OptionParser.new do |options|
   end
 
   options.on( '-a', '--major', 'Bump major number.' ) do
-    if @strategy != 'semver'
-      puts "Bumping major is only available with the semver strategy."
-      exit 1
-    end
     opts[ :major ] = true
   end
 
   options.on( '-m', '--minor', 'Bump minor number.' ) do
-    if @strategy != 'semver'
-      puts "Bumping minor is only available with the semver strategy."
-      exit 1
-    end
     opts[ :minor ] = true
   end
 
   options.on( '-p', '--patch', 'Bump patch number.' ) do
-    if @strategy != 'semver'
-      puts "Bumping patch is only available with the semver strategy."
-      exit 1
-    end
     opts[ :patch ] = true
   end
 
@@ -183,38 +182,43 @@ else
   end
 end
 
-if opts[ :strategy ]
-  ver.strategy = opts[ :strategy ]
-  write = true
-end
+begin
+  if opts[ :strategy ]
+    ver.strategy = opts[ :strategy ]
+    write = true
+  end
 
-if opts[ :stamp ]
-  ver.stamp
-  write = true
-end
+  if opts[ :stamp ]
+    ver.stamp
+    write = true
+  end
 
-if opts[ :major ]
-  ver.bump_major
-  write = true
-end
+  if opts[ :major ]
+    ver.bump_major
+    write = true
+  end
 
-if opts[ :minor ]
-  ver.bump_minor
-  write = true
-end
+  if opts[ :minor ]
+    ver.bump_minor
+    write = true
+  end
 
-if opts[ :patch ]
-  ver.bump_patch
-  write = true
-end
+  if opts[ :patch ]
+    ver.bump_patch
+    write = true
+  end
 
-if opts[ :build ]
-  ver.bump_build
-  write = true
-end
+  if opts[ :build ]
+    ver.bump_build
+    write = true
+  end
 
-if write
-  ver.save
+  if write
+    ver.save
+  end
+rescue Exception => ex
+  puts ex.message
+  exit 1
 end
 
 puts ver.string
