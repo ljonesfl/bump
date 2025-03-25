@@ -1,3 +1,5 @@
+## 2025.3.25
+
 * Added the ability to support both semver and date strategies.
 
 ## 0.2.0 2025-03-02
