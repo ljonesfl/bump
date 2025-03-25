@@ -5,6 +5,11 @@
   "description": "Schema for storing project versions. Managed by\nhttps://github.com/ljonesfl/bump",
   "type": "object",
   "properties": {
+    "strategy": {
+      "type": "string",
+      "enum": ["date", "semver"],
+      "description": "The strategy to use for versioning. Accepted values are 'date' or 'semver'."
+    },
     "major": {
       "type": "integer",
       "description": "Major version number",

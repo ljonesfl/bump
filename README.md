@@ -1,13 +1,42 @@
 # bump
-Command line tool for bumping project versions.
+Command line tool for managing project versioning.
 
 ## Usage
 
-Add a version.json file to the root of your project.<br>
+Add a `.version.json` file to the root of your project.<br>
 Use the command line utility in build scripts to increment the version number.<br>
-It supports the semver terminology of major, minor and patch.<br>
 
-### Examples
+## Strategies
+
+To select a strategy use the --strategy option.
+
+    bump --strategy semver|date
+
+### Semver (default)
+The default strategy is semver which looks like:
+
+    {
+        "strategy": "semver",
+        "major": 0,
+        "minor": 1,
+        "patch": 4,
+        "build": 15
+    }
+
+### Date
+The date strategy always uses the current date as the version number.
+
+    {
+        "strategy": "date",
+        "major": 2025,
+        "minor": 3,
+        "patch": 2
+        "build": 0
+    }
+
+The build is optional and defaults to 0. It is useful to track multiple releases in a single day.
+
+## Examples
 
 Show current version:
 
@@ -26,7 +55,7 @@ e.g.
 
 0.1.4 (15) 
     
-#### Incrementing Version Elements
+### Semver Strategy
 
 Performing an increment action reads the file, increments the requested element and writes the file back 
 out. This is ideal for automated release scripts.
@@ -49,11 +78,21 @@ major:
     
 This will load the version file, increment the patch number and write it back out.
 
-#### Creating a New File
+### Date Strategy
+
+The date strategy uses the --stamp command to set the version to the current date.
+
+    bump --stamp
+
+For multiple releases in a single day, the build number can be incremented.
+
+    bump --build
+
+### Creating a New File
 
     bump --new
     
-Creates a new version.json file is the current folder.
+Creates a new `.version.json` file is the current folder.
 
 ## Installation
 
@@ -74,8 +113,5 @@ from the develop branch:
 
      bump | xargs git flow release start
      
- Assuming your current version is 1.2.3, this command is the equivalent of typing:
+ This command will create a new git flow release using the current version number.
  
-    git flow release start 1.2.3
-    
-This command can easily be added as an alias to facilitate process automation.

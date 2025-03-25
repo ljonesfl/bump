@@ -3,30 +3,56 @@
 require 'json'
 require 'optparse'
 
+VERSION_FILE = '.version.json'
+
 class Version
+  attr_accessor :strategy
 
   def initialize
-    @major = 0
-    @minor = 0
-    @patch = 0
-    @build = 0
+    @strategy = 'semver'
+    @major    = 0
+    @minor    = 0
+    @patch    = 0
+    @build    = 0
   end
 
-  def load(file = 'version.json' )
-    if !File.file?(file)
+  def load(file = VERSION_FILE )
+    unless File.file?( file )
       raise file + " not found."
     end
 
     @file = file
-    @parts = JSON.parse(File.read(file))
+    @parts = JSON.parse( File.read( file ) )
 
-    @major = @parts['major'].to_i
-    @minor = @parts['minor'].to_i
-    @patch = @parts['patch'].to_i
-    @build = @parts['build'].to_i
+    @strategy = @parts[ 'strategy' ]
+    @major    = @parts[ 'major' ].to_i
+    @minor    = @parts[ 'minor' ].to_i
+    @patch    = @parts[ 'patch' ].to_i
+    @build    = @parts[ 'build' ].to_i
+  end
+
+  def save( file = VERSION_FILE )
+    ver = {
+      "strategy"  => @strategy,
+      "major"     => @major,
+      "minor"     => @minor,
+      "patch"     => @patch,
+      "build"     => @build
+    }
+
+    @file = file
+    json = JSON.pretty_generate( ver )
+
+    File.open( @file, "w" ) do |f|
+      f.write( json )
+    end
   end
 
   def bump_major
+    if @strategy != 'semver'
+      raise "Cannot bump the major version using the date strategy."
+    end
+
     @major += 1
     @minor = 0
     @patch = 0
@@ -34,12 +60,19 @@ class Version
   end
 
   def bump_minor
+    if @strategy != 'semver'
+      raise "Cannot bump the minor version using the date strategy."
+    end
     @minor += 1
     @patch = 0
     @build = 0
   end
 
   def bump_patch
+    if @strategy != 'semver'
+      raise "Cannot bump the patch version using the date strategy."
+    end
+
     @patch += 1
     @build = 0
   end
@@ -48,113 +81,144 @@ class Version
     @build += 1
   end
 
+  def stamp
+    if @strategy != 'date'
+      raise "Cannot stamp the version using the semver strategy."
+    end
+
+    @major = Time.now.year
+    @minor = Time.now.month
+    @patch = Time.now.day
+    @build = 0
+  end
+
   def string
     text = @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
 
-    if @build > 0 then
+    if @build > 0
       text = text + ' (' + @build.to_s + ')'
     end
 
     text
   end
 
-  def write( file = '' )
-    ver = {
-        "major" => @major,
-        "minor" => @minor,
-        "patch" => @patch,
-        "build" => @build
-    }
-
-    if file != '' then
-      @file = file
-    end
-
-    File.open(@file, "w") do |f|
-      f.write(ver.to_json)
-    end
-  end
 end
 
+#-------------------------------------------------------------
+# Main
+# ------------------------------------------------------------
+
+write = false
+
 opts = {
-          :major => false,
-          :minor => false,
-          :patch => false,
-          :build => false,
-          :file => 'version.json'
+  :strategy => false,
+  :major    => false,
+  :minor    => false,
+  :patch    => false,
+  :build    => false,
+  :file     => VERSION_FILE,
+  :stamp    => false
 }
 
 optparse = OptionParser.new do |options|
-  options.on('-h', '-?', '--help', 'Show help.') do
+  options.on( '-h', '-?', '--help', 'Show help.' ) do
     puts options
     exit
   end
 
-  options.on('-n', '--new', 'Create new version.json.') do |name|
-    opts[:new] = true
+  options.on( '--strategy [STRATEGY]', String, "Set the versioning strategy semver|date (defaults to semver)" ) do |strategy|
+    if strategy != 'semver' && strategy != 'date'
+      puts "Invalid strategy: " + strategy
+      exit 1
+    end
+    opts[ :strategy ] = strategy
+    if strategy == 'date'
+      opts[ :stamp ] = true
+    end
   end
 
-  options.on('-a', '--major', 'Bump major number.') do |name|
-    opts[:major] = true
+  options.on( '--stamp', "Stamp the current date." ) do
+    opts[ :stamp ] = true
   end
 
-  options.on('-m', '--minor', 'Bump minor number.') do |name|
-    opts[:minor] = true
+  options.on( '-n', '--new', "Create new file." ) do
+    opts[ :new ] = true
   end
 
-  options.on('-p', '--patch', 'Bump patch number.') do |name|
-    opts[:patch] = true
+  options.on( '-a', '--major', 'Bump major number.' ) do
+    opts[ :major ] = true
   end
 
-  options.on('-b', '--build', 'Bump build number.') do |name|
-    opts[:build] = true
+  options.on( '-m', '--minor', 'Bump minor number.' ) do
+    opts[ :minor ] = true
   end
 
-  options.on('-f', '--file', String, 'Specify file. (defaults to ./version.json )') do |name|
-    opts[:name] = name
+  options.on( '-p', '--patch', 'Bump patch number.' ) do
+    opts[ :patch ] = true
+  end
+
+  options.on( '-b', '--build', 'Bump build number.' ) do
+    opts[ :build ] = true
+  end
+
+  options.on( '-f', '--file [FILE]', String, "Specify file. (defaults to #{VERSION_FILE})" ) do |name|
+    opts[ :file ] = name
   end
 
 end
 
 optparse.parse($*)
 
-ver = Version.new()
+ver = Version.new
 
-if opts[:new] then
-    ver.write( "version.json" )
-    p "File created."
+if opts[ :new ]
+    ver.save( opts[ :file ] )
+    puts "File created."
 else
   begin
-    ver.load( opts[:file] )
+    ver.load( opts[ :file ] )
   rescue Exception => e
     p e.message
   end
 end
 
-write = false
+begin
+  if opts[ :strategy ]
+    ver.strategy = opts[ :strategy ]
+    write = true
+  end
 
-if opts[:major] then
-  ver.bump_major
-  write = true
-end
+  if opts[ :stamp ]
+    ver.stamp
+    write = true
+  end
 
-if opts[:minor] then
-  ver.bump_minor
-  write = true
-end
+  if opts[ :major ]
+    ver.bump_major
+    write = true
+  end
 
-if opts[:patch] then
-  ver.bump_patch
-  write = true
-end
+  if opts[ :minor ]
+    ver.bump_minor
+    write = true
+  end
 
-if opts[:build] then
-  ver.bump_build
-  write = true
-end
+  if opts[ :patch ]
+    ver.bump_patch
+    write = true
+  end
 
-if write then
-  ver.write
+  if opts[ :build ]
+    ver.bump_build
+    write = true
+  end
+
+  if write
+    ver.save
+  end
+rescue Exception => ex
+  puts ex.message
+  exit 1
 end
 
 puts ver.string

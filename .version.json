@@ -1,1 +1,7 @@
-{"major":0,"minor":1,"patch":5}
+{
+  "strategy": "date",
+  "major": 2025,
+  "minor": 3,
+  "patch": 25,
+  "build": 0
+}
