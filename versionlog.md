@@ -1,3 +1,7 @@
+## 2025.4.2
+
+* Updated rendering of version build number.
+
 ## 2025.3.25
 
 * Added the ability to support both semver and date strategies.
