@@ -96,7 +96,7 @@ class Version
     text = @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
 
     if @build > 0
-      text = text + ' (' + @build.to_s + ')'
+      text = text + '.' + @build.to_s
     end
 
     text
