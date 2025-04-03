@@ -1,3 +1,5 @@
+## 2025.4.2
+
 * Updated rendering of version build number.
 
 ## 2025.3.25
