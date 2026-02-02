@@ -115,3 +115,6 @@ from the develop branch:
      
  This command will create a new git flow release using the current version number.
  
+## Xcode
+
+If an xcode project is detected in the folder, the MARKETING_VERSION in project.pbxproj will be syncronized with the version.

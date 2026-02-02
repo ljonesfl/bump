@@ -5,6 +5,28 @@ require 'optparse'
 
 VERSION_FILE = '.version.json'
 
+def xcode_project_pbxproj_paths
+  xcodeproj_paths = Dir.glob("**/*.xcodeproj")
+  xcworkspace_paths = Dir.glob("**/*.xcworkspace")
+  return [] if xcodeproj_paths.empty? && xcworkspace_paths.empty?
+
+  xcodeproj_paths.map { |path| File.join(path, "project.pbxproj") }
+                 .select { |path| File.file?(path) }
+end
+
+def update_marketing_versions(pbxproj_paths, version_string)
+  pbxproj_paths.each do |path|
+    content = File.read(path)
+    updated = content.gsub(/(MARKETING_VERSION\s*=\s*)([^;]+)(;)/) do
+      $1 + version_string + $3
+    end
+
+    if updated != content
+      File.open(path, "w") { |file| file.write(updated) }
+    end
+  end
+end
+
 class Version
   attr_accessor :strategy
 
@@ -219,6 +241,11 @@ begin
 rescue Exception => ex
   puts ex.message
   exit 1
+end
+
+pbxproj_paths = xcode_project_pbxproj_paths
+if pbxproj_paths.any?
+  update_marketing_versions(pbxproj_paths, ver.string)
 end
 
 puts ver.string

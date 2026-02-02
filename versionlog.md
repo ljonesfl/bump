@@ -1,3 +1,5 @@
+* Added xcode project version updating.
+
 ## 2025.4.2
 
 * Updated rendering of version build number.
