@@ -1,3 +1,8 @@
+## 2026.10.8.1
+
+* Added xcode project version updating.
+* Build number now always increments.
+* 
 ## 2025.4.2
 
 * Updated rendering of version build number.

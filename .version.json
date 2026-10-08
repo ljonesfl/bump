@@ -1,7 +1,7 @@
 {
   "strategy": "date",
-  "major": 2025,
-  "minor": 4,
-  "patch": 2,
-  "build": 0
+  "major": 2026,
+  "minor": 10,
+  "patch": 8,
+  "build": 1
 }
