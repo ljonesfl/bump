@@ -30,11 +30,31 @@ The date strategy always uses the current date as the version number.
         "strategy": "date",
         "major": 2025,
         "minor": 3,
-        "patch": 2
+        "patch": 2,
         "build": 0
     }
 
-The build is optional and defaults to 0. It is useful to track multiple releases in a single day.
+## The build number
+
+The build is a **lifetime counter**. Every mutating command advances it -- `--stamp`, `--build`, `--patch`, `--minor` and `--major` -- and nothing ever resets it.
+
+That is deliberate. Apple requires `CFBundleVersion` to increase within a marketing version, and Google Play rejects outright any upload whose `versionCode` is not higher than every build already submitted. A counter that reset on each new version would be illegal on Play and merely tolerated on the App Store, so it does not reset.
+
+Gaps do not matter. Bumping without releasing skips a number, which is normal for any build counter.
+
+Apple marketing versions (`CFBundleShortVersionString`) may have at most three integers, so `bump` keeps the two values apart:
+
+* **Marketing version:** `major.minor.patch` (for example `2026.9.18`)
+* **Build number:** the integer `build` (for example `23`)
+
+### What `bump` prints
+
+The printed string doubles as the git tag and the `versionlog.md` heading.
+
+* The **date strategy** always appends the build: `2026.9.18.23`. Every release on a given day shares one marketing version, so the build is the only thing that distinguishes them -- and because it always increases, the tag is always unique.
+* The **semver strategy** stays three parts: `0.1.4`. Semver versions never repeat, so there is nothing to disambiguate.
+
+For Flutter apps, `pubspec.yaml` is updated to `2026.9.18+23`.
 
 ## Examples
 
@@ -49,11 +69,9 @@ e.g.
 
 0.1.4
 
-If the version contains a build number > 0 then it will show the build also.
+Under the date strategy the build number is appended, so the same command shows:
 
-e.g.
-
-0.1.4 (15) 
+2026.9.18.23
     
 ### Semver Strategy
 
@@ -84,7 +102,9 @@ The date strategy uses the --stamp command to set the version to the current dat
 
     bump --stamp
 
-For multiple releases in a single day, the build number can be incremented.
+`--stamp` advances the build number as well as setting the date, so there is no need to check whether today has already been stamped. Two releases in one day give `2026.9.18.23` and then `2026.9.18.24`.
+
+To advance the build number without touching the date:
 
     bump --build
 
@@ -115,6 +135,13 @@ from the develop branch:
      
  This command will create a new git flow release using the current version number.
  
-## Xcode
+## Xcode and Flutter
 
-If an xcode project is detected in the folder, the MARKETING_VERSION in project.pbxproj will be syncronized with the version.
+If an Xcode project is detected (and this is not a Flutter app), `agvtool` sets:
+
+* `MARKETING_VERSION` / `CFBundleShortVersionString` to the three-part marketing version
+* `CURRENT_PROJECT_VERSION` / `CFBundleVersion` to the integer build
+
+If `pubspec.yaml` contains a Flutter project, `bump` updates `version: x.y.z+build` instead of calling `agvtool`, so App Store Connect never receives a four-part marketing version. Flutter maps that `+build` to `CFBundleVersion` on iOS and to `versionCode` on Android.
+
+`bump` reads both values back as well. If a manual archive pushed `CURRENT_PROJECT_VERSION` or `pubspec.yaml`'s `+build` past `.version.json`, the higher number becomes the floor and the counter carries on from there instead of going backwards.

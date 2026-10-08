@@ -5,26 +5,65 @@ require 'optparse'
 
 VERSION_FILE = '.version.json'
 
-def xcode_project_pbxproj_paths
-  xcodeproj_paths = Dir.glob("**/*.xcodeproj")
-  xcworkspace_paths = Dir.glob("**/*.xcworkspace")
-  return [] if xcodeproj_paths.empty? && xcworkspace_paths.empty?
-
-  xcodeproj_paths.map { |path| File.join(path, "project.pbxproj") }
-                 .select { |path| File.file?(path) }
+def xcode_project_dirs
+  paths = Dir.glob("**/*.xcodeproj") + Dir.glob("**/*.xcworkspace")
+  paths.map { |path| File.dirname(path) }.uniq
 end
 
-def update_marketing_versions(pbxproj_paths, version_string)
-  pbxproj_paths.each do |path|
-    content = File.read(path)
-    updated = content.gsub(/(MARKETING_VERSION\s*=\s*)([^;]+)(;)/) do
-      $1 + version_string + $3
-    end
+def update_xcode_versions_with_agvtool(project_dirs, marketing_version, bundle_version)
+  project_dirs.each do |dir|
+    marketing_ok = system("agvtool", "new-marketing-version", marketing_version,
+                          out: File::NULL, err: File::NULL, chdir: dir)
+    warn "agvtool failed to update MARKETING_VERSION in #{dir}." unless marketing_ok
 
-    if updated != content
-      File.open(path, "w") { |file| file.write(updated) }
-    end
+    bundle_ok = system("agvtool", "new-version", "-all", bundle_version,
+                       out: File::NULL, err: File::NULL, chdir: dir)
+    warn "agvtool failed to update CURRENT_PROJECT_VERSION in #{dir}." unless bundle_ok
   end
+end
+
+def flutter_project?
+  File.file?("pubspec.yaml") && File.read("pubspec.yaml").match?(/^flutter:/)
+end
+
+def update_pubspec_version(marketing_version, bundle_version)
+  return unless File.file?("pubspec.yaml")
+
+  contents = File.read("pubspec.yaml")
+  updated = contents.sub(/^version:\s*.*$/, "version: #{marketing_version}+#{bundle_version}")
+  return if updated == contents
+
+  File.write("pubspec.yaml", updated)
+end
+
+def pubspec_build_number
+  return 0 unless File.file?("pubspec.yaml")
+
+  match = File.read("pubspec.yaml").match(/^version:\s*[^\s+#]+(?:\+(\d+))?/)
+  match && match[1] ? match[1].to_i : 0
+end
+
+# CURRENT_PROJECT_VERSION as agvtool reports it. Flutter projects resolve
+# $(FLUTTER_BUILD_NUMBER) at build time, so there is nothing authoritative to
+# read back from the Xcode project there.
+def xcode_build_number
+  return 0 if flutter_project?
+
+  xcode_project_dirs.map do |dir|
+    output = begin
+      IO.popen([ "agvtool", "what-version", "-terse" ], chdir: dir, err: File::NULL, &:read)
+    rescue SystemCallError
+      nil
+    end
+    output.to_s.strip[/\A\d+\z/].to_i
+  end.max || 0
+end
+
+# The highest build number already recorded anywhere in the project. A manual
+# archive can advance the project past .version.json, and the counter must not
+# fall back behind it.
+def project_build_floor
+  [ pubspec_build_number, xcode_build_number ].max
 end
 
 class Version
@@ -51,6 +90,14 @@ class Version
     @minor    = @parts[ 'minor' ].to_i
     @patch    = @parts[ 'patch' ].to_i
     @build    = @parts[ 'build' ].to_i
+    adopt_higher_project_build
+  end
+
+  # App Store CFBundleVersion and Play versionCode must never go backwards.
+  # If the project files already claim a higher build, that is the floor.
+  def adopt_higher_project_build
+    higher = project_build_floor
+    @build = higher if higher > @build
   end
 
   def save( file = VERSION_FILE )
@@ -78,7 +125,7 @@ class Version
     @major += 1
     @minor = 0
     @patch = 0
-    @build = 0
+    bump_build
   end
 
   def bump_minor
@@ -87,7 +134,7 @@ class Version
     end
     @minor += 1
     @patch = 0
-    @build = 0
+    bump_build
   end
 
   def bump_patch
@@ -96,7 +143,7 @@ class Version
     end
 
     @patch += 1
-    @build = 0
+    bump_build
   end
 
   def bump_build
@@ -111,17 +158,33 @@ class Version
     @major = Time.now.year
     @minor = Time.now.month
     @patch = Time.now.day
-    @build = 0
+
+    # The build is a lifetime counter, so re-stamping a date that has not
+    # changed still advances it. That is what makes same-day releases
+    # distinguishable without having to count how many there have been.
+    bump_build
   end
 
+  # Git tag / versionlog. The date strategy always carries the build number:
+  # every release on a given day shares a marketing version, so the build is
+  # the only thing that tells them apart. Semver versions never repeat, so
+  # they stay three parts.
   def string
-    text = @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
+    return marketing_string + '.' + @build.to_s if @strategy == 'date'
 
-    if @build > 0
-      text = text + '.' + @build.to_s
-    end
+    marketing_string
+  end
 
-    text
+  # Apple CFBundleShortVersionString: at most three integers (x.y.z).
+  def marketing_string
+    @major.to_s + '.' + @minor.to_s + '.' + @patch.to_s
+  end
+
+  # Apple CFBundleVersion / Play versionCode / Flutter +build. A lifetime
+  # counter that only ever increases. Both stores demand a positive integer,
+  # so zero -- which can now only mean "never bumped" -- floors to one.
+  def bundle_version
+    [@build, 1].max.to_s
   end
 
 end
@@ -243,9 +306,17 @@ rescue Exception => ex
   exit 1
 end
 
-pbxproj_paths = xcode_project_pbxproj_paths
-if pbxproj_paths.any?
-  update_marketing_versions(pbxproj_paths, ver.string)
+if write
+  update_pubspec_version(ver.marketing_string, ver.bundle_version)
+
+  # Flutter Info.plist uses $(FLUTTER_BUILD_*), so skip agvtool there.
+  # Native Xcode apps still get MARKETING_VERSION + CURRENT_PROJECT_VERSION.
+  unless flutter_project?
+    project_dirs = xcode_project_dirs
+    if project_dirs.any?
+      update_xcode_versions_with_agvtool(project_dirs, ver.marketing_string, ver.bundle_version)
+    end
+  end
 end
 
 puts ver.string
